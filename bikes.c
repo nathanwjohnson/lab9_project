@@ -8,8 +8,10 @@
 #define GRID_X (DISPLAY_WIDTH / GRID_WIDTH)
 #define GRID_Y (DISPLAY_HEIGHT / GRID_WIDTH)
 #define DIRECTIONS 4
-#define BIKE_START_X 100
-#define BIKE_START_Y 100
+#define BIKE_1_START_X 100
+#define BIKE_1_START_Y 120
+#define BIKE_2_START_X 300
+#define BIKE_2_START_Y 120
 #define LAST_LIGHT (LIGHT_LENGTH - 1)
 
 // DISPLAY_WIDTH 320
@@ -19,7 +21,7 @@ enum bike_st_t { INIT_ST, MOVING_ST, DYING_ST, DEAD_ST };
 
 display_point_t last_point, last_light;
 
-static void player_bike_next(bike_t *bike) {
+static void bike_next(bike_t *bike) {
   switch (bike->direction) {
   case LEFT:
     bike->next.x -= GRID_WIDTH;
@@ -55,22 +57,35 @@ static void update_light(bike_t *bike) {
   bike->light[0] = bike->current;
 }
 
-static void player_bike_init(bike_t *bike) {
-  bike->current.x = BIKE_START_X;
-  bike->current.y = BIKE_START_Y;
+static void first_bike_init(bike_t *bike) {
+  bike->current.x = BIKE_1_START_X;
+  bike->current.y = BIKE_1_START_Y;
 
-  bike->direction = rand() % DIRECTIONS;
-  bike->next.x = BIKE_START_X;
-  bike->next.y = BIKE_START_Y;
+  bike->direction = RIGHT;
+  bike->next.x = BIKE_1_START_X;
+  bike->next.y = BIKE_1_START_Y;
   bike_next(bike);
 
   bike->color = DISPLAY_CYAN;
   bike->currentState = INIT_ST;
 }
 
+static void second_bike_init(bike_t *bike) {
+  bike->current.x = BIKE_2_START_X;
+  bike->current.y = BIKE_2_START_Y;
+
+  bike->direction = LEFT;
+  bike->next.x = BIKE_2_START_X;
+  bike->next.y = BIKE_2_START_Y;
+  bike_next(bike);
+
+  bike->color = DISPLAY_MAGENTA;
+  bike->currentState = INIT_ST;
+}
+
 ////////// State Machine TICK Function //////////
 void bike_tick(bike_t *bike, display_point_t *enemy_light) {
-  // State update and mealy operations of the missile_tick state machine
+  // State update and mealy operations of the bike_tick state machine
   switch (bike->currentState) {
   // moves from init to moving
   case INIT_ST:
@@ -85,10 +100,10 @@ void bike_tick(bike_t *bike, display_point_t *enemy_light) {
           break;
         }
       }
-      // update bike direction
+      // update light direction
       light_direction(bike);
       // update bike next destination
-      player_bike_next(bike);
+      bike_next(bike);
       // update light
       update_light(bike);
     }
@@ -139,8 +154,37 @@ bool bike_is_dead(bike_t *bike) {
     return true;
 }
 
-void enemy_turn(bike_t *bike, ) {
-
+void enemy_turn(bike_t *bike, direction_t direction) {
+  if (direction == LEFT) {
+    switch (bike->direction) {
+    case LEFT:
+      bike->direction = DOWN;
+      break;
+    case RIGHT:
+      bike->direction = UP;
+      break;
+    case UP:
+      bike->direction = LEFT;
+      break;
+    case DOWN:
+      bike->direction = RIGHT;
+      break;
+    }
+  }
+  if (direction == RIGHT) {
+    switch (bike->direction) {
+    case LEFT:
+      bike->direction = UP;
+      break;
+    case RIGHT:
+      bike->direction = DOWN;
+      break;
+    case UP:
+      bike->direction = RIGHT;
+      break;
+    case DOWN:
+      bike->direction = RIGHT;
+      break;
+    }
+  }
 }
-
-void bike_trigger_explosion(bike_t *bike) {}
