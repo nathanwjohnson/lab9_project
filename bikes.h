@@ -26,9 +26,9 @@ typedef struct {
 
 } bike_t;
 
-void player_bike_init(bike_t *bike);
+void first_bike_init(bike_t *bike);
 
-void enemy_bike_init(bike_t *bike);
+void second_bike_init(bike_t *bike);
 
 ////////// State Machine TICK Function //////////
 void bike_tick(bike_t *bike);
