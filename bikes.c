@@ -21,7 +21,7 @@ enum bike_st_t { INIT_ST, MOVING_ST, DYING_ST, DEAD_ST };
 
 display_point_t last_point, last_light;
 
-static void bike_next(bike_t *bike) {
+void bike_next(bike_t *bike) {
   switch (bike->direction) {
   case LEFT:
     bike->next.x -= GRID_WIDTH;
@@ -38,7 +38,7 @@ static void bike_next(bike_t *bike) {
   }
 }
 
-static void light_direction(bike_t *bike) {
+void light_direction(bike_t *bike) {
   if (bike->light[LAST_LIGHT].x > bike->light_current.x) {
     bike->light_direction = RIGHT;
   } else if (bike->light[LAST_LIGHT].x < bike->light_current.x) {
@@ -50,14 +50,14 @@ static void light_direction(bike_t *bike) {
   }
 }
 
-static void update_light(bike_t *bike) {
+void update_light(bike_t *bike) {
   for (int16_t i = LAST_LIGHT; i > 0; i--) {
     bike->light[i] = bike->light[i - 1];
   }
   bike->light[0] = bike->current;
 }
 
-static void first_bike_init(bike_t *bike) {
+void first_bike_init(bike_t *bike) {
   bike->current.x = BIKE_1_START_X;
   bike->current.y = BIKE_1_START_Y;
 
@@ -70,7 +70,7 @@ static void first_bike_init(bike_t *bike) {
   bike->currentState = INIT_ST;
 }
 
-static void second_bike_init(bike_t *bike) {
+void second_bike_init(bike_t *bike) {
   bike->current.x = BIKE_2_START_X;
   bike->current.y = BIKE_2_START_Y;
 
