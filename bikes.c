@@ -148,7 +148,7 @@ void bike_tick(bike_t *bike, display_point_t *enemy_light) {
   }
 }
 
-// Return whether the given missile is dead.
+// Return whether the given bike is dead.
 bool bike_is_dead(bike_t *bike) {
   if (bike->currentState == DEAD_ST)
     return true;
