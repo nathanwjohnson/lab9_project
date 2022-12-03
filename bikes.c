@@ -10,9 +10,9 @@
 #define GRID_X (DISPLAY_WIDTH / GRID_WIDTH)
 #define GRID_Y (DISPLAY_HEIGHT / GRID_WIDTH)
 #define DIRECTIONS 4
-#define BIKE_1_START_X 100
+#define BIKE_1_START_X 50
 #define BIKE_1_START_Y 120
-#define BIKE_2_START_X 300
+#define BIKE_2_START_X 270
 #define BIKE_2_START_Y 120
 #define LAST_LIGHT (LIGHT_LENGTH - 1)
 
@@ -73,6 +73,8 @@ void first_bike_init(bike_t *bike) {
 
   bike->color = DISPLAY_CYAN;
   bike->currentState = INIT_ST;
+
+  bike->type = PLAYER_1;
 }
 
 void second_bike_init(bike_t *bike) {
@@ -87,6 +89,8 @@ void second_bike_init(bike_t *bike) {
 
   bike->color = DISPLAY_MAGENTA;
   bike->currentState = INIT_ST;
+
+  bike->type = PLAYER_2;
 }
 
 ////////// State Machine TICK Function //////////
@@ -103,15 +107,25 @@ void bike_tick(bike_t *bike /*, display_point_t *enemy_light*/) {
   case MOVING_ST:
     // printf("Entered MOVING_ST\n");
 
+    if (bike->current.x == 0 || bike->current.x == 320 || bike->current.y == 0 || bike->current.y == 240) {
+      bike->currentState = DEAD_ST;
+    }
+
     BUTTON_VALUES = buttons_read();
     // printf("Buttons Pushed: %d\n", buttons_read());
 
     // printf("NEXT.X: %d\n", bike->next.x);
     // printf("current.X: %d\n", bike->current.x);
 
-    if (BUTTON_VALUES == 1) {
+    if ((BUTTON_VALUES == 1) && (bike->type == PLAYER_1)) {
       bike->next_direction = RIGHT;
-    } else if (BUTTON_VALUES == 2) {
+    } else if ((BUTTON_VALUES == 2) && (bike->type == PLAYER_1)) {
+      bike->next_direction = LEFT;
+    }
+
+    if ((BUTTON_VALUES == 4) && (bike->type == PLAYER_2)) {
+      bike->next_direction = RIGHT;
+    } else if ((BUTTON_VALUES == 8) && (bike->type == PLAYER_2)) {
       bike->next_direction = LEFT;
     }
 

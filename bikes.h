@@ -13,11 +13,18 @@ typedef enum {
   DOWN,
 } direction_t;
 
+typedef enum {
+  PLAYER_1,
+  PLAYER_2
+} bike_type_t;
+
 typedef struct {
 
   uint16_t color;
 
   int32_t currentState;
+
+  bike_type_t type;
 
   display_point_t current, next, light_current;
   display_point_t light[LIGHT_LENGTH];
