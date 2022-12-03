@@ -116,7 +116,7 @@ void bike_tick(bike_t *bike, display_point_t *enemy_light) {
   }
 
   // Perform moore state action next.
-  switch (missile->currentState) {
+  switch (bike->currentState) {
   case INIT_ST:
     break;
   case MOVING_ST:
