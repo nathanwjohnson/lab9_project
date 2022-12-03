@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "bikes.h"
 #include "config.h"
 #include "display.h"
@@ -84,7 +85,9 @@ void second_bike_init(bike_t *bike) {
 }
 
 ////////// State Machine TICK Function //////////
-void bike_tick(bike_t *bike, display_point_t *enemy_light) {
+void bike_tick(bike_t *bike/*, display_point_t *enemy_light*/) {
+  //printf("Entered bike_tick\n");
+  
   // State update and mealy operations of the bike_tick state machine
   switch (bike->currentState) {
   // moves from init to moving
@@ -92,14 +95,16 @@ void bike_tick(bike_t *bike, display_point_t *enemy_light) {
     bike->currentState = MOVING_ST;
     break;
   case MOVING_ST:
+    //printf("Entered MOVING_ST\n");
+    //display_drawLine(bike->current.x, bike->current.y, last_point.x, last_point.y, bike->color);
     if (bike->current.x == bike->next.x && bike->current.y == bike->next.y) {
-      for (uint16_t i = 0; i < LIGHT_LENGTH; i++) {
+      /*for (uint16_t i = 0; i < LIGHT_LENGTH; i++) {
         if (bike->current.x == enemy_light[i].x &&
             bike->current.y == enemy_light[i].y) {
           bike->currentState = DYING_ST;
           break;
         }
-      }
+      }*/
       // update light direction
       light_direction(bike);
       // update bike next destination
