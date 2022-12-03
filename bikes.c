@@ -68,6 +68,7 @@ void first_bike_init(bike_t *bike) {
   bike->direction = RIGHT;
   bike->next.x = BIKE_1_START_X;
   bike->next.y = BIKE_1_START_Y;
+  bike->next_direction = DOWN;
   bike_next(bike);
 
   bike->color = DISPLAY_CYAN;
@@ -81,6 +82,7 @@ void second_bike_init(bike_t *bike) {
   bike->direction = LEFT;
   bike->next.x = BIKE_2_START_X;
   bike->next.y = BIKE_2_START_Y;
+  bike->next_direction = DOWN;
   bike_next(bike);
 
   bike->color = DISPLAY_MAGENTA;
@@ -106,14 +108,11 @@ void bike_tick(bike_t *bike /*, display_point_t *enemy_light*/) {
 
     // printf("NEXT.X: %d\n", bike->next.x);
     // printf("current.X: %d\n", bike->current.x);
-    direction_t direction = bike->direction;
 
     if (BUTTON_VALUES == 1) {
-      direction = 1;
-      enemy_turn(bike, direction);
+      bike->next_direction = RIGHT;
     } else if (BUTTON_VALUES == 2) {
-      direction = 0;
-      enemy_turn(bike, direction);
+      bike->next_direction = LEFT;
     }
 
     if (bike->current.x == bike->next.x && bike->current.y == bike->next.y) {
@@ -125,12 +124,15 @@ void bike_tick(bike_t *bike /*, display_point_t *enemy_light*/) {
         }
       }*/
 
+      enemy_turn(bike, bike->next_direction);
+
       // update light direction
       light_direction(bike);
       // update bike next destination
       bike_next(bike);
       // update light
       update_light(bike);
+      bike->next_direction = DOWN;
     }
     break;
   // it is dead do nothing till initialized
@@ -208,7 +210,7 @@ void enemy_turn(bike_t *bike, direction_t direction) {
       bike->direction = RIGHT;
       break;
     case DOWN:
-      bike->direction = RIGHT;
+      bike->direction = LEFT;
       break;
     }
   }

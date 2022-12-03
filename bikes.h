@@ -22,7 +22,7 @@ typedef struct {
   display_point_t current, next, light_current;
   display_point_t light[LIGHT_LENGTH];
 
-  direction_t direction, light_direction;
+  direction_t direction, light_direction, next_direction;
 
 } bike_t;
 
