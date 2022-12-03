@@ -15,7 +15,7 @@ bike_t bike[2];
 void isr() {
     intervalTimer_ackInterrupt(INTERVAL_TIMER_0);
 
-    for (uint16_t i = 0; i < 2; i++) {
+    for (uint16_t i = 0; i < 1; i++) {
     bike_tick(&bike[i]);
     }
 
@@ -41,7 +41,7 @@ void main() {
     first_bike_init(&bike[0]);
     //second_bike_init(&bike[1]);
 
-    for (uint16_t i = 0; i < 2; i++)
+    for (uint16_t i = 0; i < 1; i++)
         bike_tick(&bike[i]);
 
     // Main game loop
