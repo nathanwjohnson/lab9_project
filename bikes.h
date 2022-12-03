@@ -33,7 +33,7 @@ void second_bike_init(bike_t *bike);
 ////////// State Machine TICK Function //////////
 void bike_tick(bike_t *bike);
 
-// Return whether the given missile is dead.
+// Return whether the given bike is dead.
 bool bike_is_dead(bike_t *bike);
 
 void enemy_turn(bike_t *bike);
