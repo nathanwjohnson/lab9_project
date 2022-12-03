@@ -1,4 +1,4 @@
-#include "display.h"
+/*#include "display.h"
 #include "touchscreen.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -219,3 +219,4 @@ bool minimax_isGameOver(minimax_score_t score) {
   }
   return true;
 }
+*/

@@ -2,7 +2,6 @@
 #include "bikes.h"
 #include "config.h"
 #include "display.h"
-#include "buttons.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -18,8 +17,6 @@
 
 // DISPLAY_WIDTH 320
 // DISPLAY_HEIGHT 240
-
-uint8_t BUTTON_VALUES;
 
 enum bike_st_t { INIT_ST, MOVING_ST, DYING_ST, DEAD_ST };
 
@@ -96,24 +93,10 @@ void bike_tick(bike_t *bike/*, display_point_t *enemy_light*/) {
   // moves from init to moving
   case INIT_ST:
     bike->currentState = MOVING_ST;
-    //printf("Entered INIT_ST\n");
     break;
   case MOVING_ST:
-    //printf("Entered MOVING_ST\n");
-    
-    
-    BUTTON_VALUES = buttons_read();
-    //printf("Buttons Pushed: %d\n", buttons_read());
-
-    if (BUTTON_VALUES == 1) {
-      bike->next.x = bike->light_current.x + GRID_WIDTH;
-    } else if (BUTTON_VALUES == 2) {
-      bike->next.x = bike->light_current.x - GRID_WIDTH;
-    }
-
-    printf("NEXT.X: %d\n", bike->next.x);
-    
-    
+    printf("Entered MOVING_ST\n");
+    //display_drawLine(bike->current.x, bike->current.y, last_point.x, last_point.y, bike->color);
     if (bike->current.x == bike->next.x && bike->current.y == bike->next.y) {
       /*for (uint16_t i = 0; i < LIGHT_LENGTH; i++) {
         if (bike->current.x == enemy_light[i].x &&
@@ -122,7 +105,6 @@ void bike_tick(bike_t *bike/*, display_point_t *enemy_light*/) {
           break;
         }
       }*/
-
       // update light direction
       light_direction(bike);
       // update bike next destination

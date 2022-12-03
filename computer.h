@@ -1,4 +1,4 @@
-#ifndef COMPUTER
+/*#ifndef COMPUTER
 #define COMPUTER
 
 #include <stdbool.h>
