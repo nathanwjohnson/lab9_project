@@ -20,6 +20,7 @@
 // DISPLAY_HEIGHT 240
 
 uint8_t BUTTON_VALUES;
+uint16_t counter = 0;
 
 enum bike_st_t { INIT_ST, MOVING_ST, DYING_ST, DEAD_ST };
 
@@ -49,7 +50,7 @@ void light_direction(bike_t *bike) {
     bike->light_direction = LEFT;
   } else if (bike->light[LAST_LIGHT].y > bike->light_current.y) {
     bike->light_direction = DOWN;
-  } else {
+  } else if (bike->light[LAST_LIGHT].y < bike->light_current.y) {
     bike->light_direction = UP;
   }
 }
@@ -62,6 +63,7 @@ void update_light(bike_t *bike) {
 }
 
 void first_bike_init(bike_t *bike) {
+  counter = 0;
   bike->current.x = BIKE_1_START_X;
   bike->current.y = BIKE_1_START_Y;
 
@@ -71,6 +73,16 @@ void first_bike_init(bike_t *bike) {
   bike->next_direction = DOWN;
   bike_next(bike);
 
+  for (uint16_t i = 0; i < LIGHT_LENGTH; i++) {
+    bike->light[i].x = BIKE_1_START_X;
+    bike->light[i].y = BIKE_1_START_Y;
+  }
+
+  bike->light_current.x = bike->current.x = BIKE_1_START_X - 10;
+  bike->light_current.y = bike->current.y = BIKE_1_START_Y;
+
+  bike->light_direction = RIGHT;
+
   bike->color = DISPLAY_CYAN;
   bike->currentState = INIT_ST;
 
@@ -78,6 +90,7 @@ void first_bike_init(bike_t *bike) {
 }
 
 void second_bike_init(bike_t *bike) {
+  counter = 0;
   bike->current.x = BIKE_2_START_X;
   bike->current.y = BIKE_2_START_Y;
 
@@ -87,6 +100,16 @@ void second_bike_init(bike_t *bike) {
   bike->next_direction = DOWN;
   bike_next(bike);
 
+  for (uint16_t i = 0; i < LIGHT_LENGTH; i++) {
+    bike->light[i].x = BIKE_2_START_X;
+    bike->light[i].y = BIKE_2_START_Y;
+  }
+
+  bike->light_current.x = bike->current.x = BIKE_2_START_X + 10;
+  bike->light_current.y = bike->current.y = BIKE_2_START_Y;
+
+  bike->light_direction = LEFT;
+
   bike->color = DISPLAY_MAGENTA;
   bike->currentState = INIT_ST;
 
@@ -94,20 +117,25 @@ void second_bike_init(bike_t *bike) {
 }
 
 ////////// State Machine TICK Function //////////
-void bike_tick(bike_t *bike /*, display_point_t *enemy_light*/) {
+void bike_tick(bike_t *bike, bike_t *enemyBike) {
   // printf("Entered bike_tick\n");
 
   // State update and mealy operations of the bike_tick state machine
   switch (bike->currentState) {
   // moves from init to moving
   case INIT_ST:
-    bike->currentState = MOVING_ST;
+    if (bike->type == PLAYER_1 || counter >= 5) {
+      bike->currentState = MOVING_ST;
+    } else {
+      counter++;
+    }
     // printf("Entered INIT_ST\n");
     break;
   case MOVING_ST:
     // printf("Entered MOVING_ST\n");
 
-    if (bike->current.x == 0 || bike->current.x == 320 || bike->current.y == 0 || bike->current.y == 240) {
+    if (bike->current.x == 0 || bike->current.x == 320 ||
+        bike->current.y == 0 || bike->current.y == 240) {
       bike->currentState = DEAD_ST;
     }
 
@@ -115,37 +143,54 @@ void bike_tick(bike_t *bike /*, display_point_t *enemy_light*/) {
     // printf("Buttons Pushed: %d\n", buttons_read());
 
     // printf("NEXT.X: %d\n", bike->next.x);
-    // printf("current.X: %d\n", bike->current.x);
+    if (abs(bike->current.x - bike->next.x) > 7 ||
+        abs(bike->current.y - bike->next.y) > 7) {
+      if ((BUTTON_VALUES == 1) && (bike->type == PLAYER_1)) {
+        bike->next_direction = RIGHT;
+      } else if ((BUTTON_VALUES == 2) && (bike->type == PLAYER_1)) {
+        bike->next_direction = LEFT;
+      }
 
-    if ((BUTTON_VALUES == 1) && (bike->type == PLAYER_1)) {
-      bike->next_direction = RIGHT;
-    } else if ((BUTTON_VALUES == 2) && (bike->type == PLAYER_1)) {
-      bike->next_direction = LEFT;
-    }
-
-    if ((BUTTON_VALUES == 4) && (bike->type == PLAYER_2)) {
-      bike->next_direction = RIGHT;
-    } else if ((BUTTON_VALUES == 8) && (bike->type == PLAYER_2)) {
-      bike->next_direction = LEFT;
+      if ((BUTTON_VALUES == 4) && (bike->type == PLAYER_2)) {
+        bike->next_direction = RIGHT;
+      } else if ((BUTTON_VALUES == 8) && (bike->type == PLAYER_2)) {
+        bike->next_direction = LEFT;
+      }
     }
 
     if (bike->current.x == bike->next.x && bike->current.y == bike->next.y) {
-      /*for (uint16_t i = 0; i < LIGHT_LENGTH; i++) {
-        if (bike->current.x == enemy_light[i].x &&
-            bike->current.y == enemy_light[i].y) {
+      for (uint16_t i = 0; i < LIGHT_LENGTH; i++) {
+        if (bike->current.x == enemyBike->light[i].x &&
+            bike->current.y == enemyBike->light[i].y) {
           bike->currentState = DYING_ST;
           break;
         }
-      }*/
+      }
+
+      // uint64_t color = rand() % 4;
+      // if (color == 1) {
+      //   color = DISPLAY_GREEN;
+      // } else if (color == 2) {
+      //   color = DISPLAY_RED;
+      // }else if (color == 3) {
+      //   color = DISPLAY_YELLOW;
+      // }else if (color == 4) {
+      //   color = DISPLAY_WHITE;
+      // }
+
+      /*for (int16_t i = 1; i < LIGHT_LENGTH; i++) {
+        display_drawLine(bike->light[i].x, bike->light[i].y,
+                         bike->light[i - 1].x, bike->light[i - 1].y, color);
+      } */
 
       enemy_turn(bike, bike->next_direction);
-
+      // update light
+      update_light(bike);
       // update light direction
       light_direction(bike);
       // update bike next destination
       bike_next(bike);
-      // update light
-      update_light(bike);
+
       bike->next_direction = DOWN;
     }
     break;
@@ -177,12 +222,55 @@ void bike_tick(bike_t *bike /*, display_point_t *enemy_light*/) {
       bike->current.y += CONFIG_BIKE_DISTANCE_PER_TICK;
       break;
     }
+    switch (bike->light_direction) {
+    case LEFT:
+      bike->light_current.x -= CONFIG_BIKE_DISTANCE_PER_TICK;
+      break;
+    case RIGHT:
+      bike->light_current.x += CONFIG_BIKE_DISTANCE_PER_TICK;
+      break;
+    case UP:
+      bike->light_current.y -= CONFIG_BIKE_DISTANCE_PER_TICK;
+      break;
+    case DOWN:
+      bike->light_current.y += CONFIG_BIKE_DISTANCE_PER_TICK;
+      break;
+    }
+    // uint64_t color = rand() % 4;
+    // if (color == 1) {
+    //   color = DISPLAY_GREEN;
+    // } else if (color == 2) {
+    //   color = DISPLAY_RED;
+    // }else if (color == 3) {
+    //   color = DISPLAY_YELLOW;
+    // }else if (color == 4) {
+    //   color = DISPLAY_WHITE;
+    // }
+
     display_drawLine(bike->current.x, bike->current.y, last_point.x,
                      last_point.y, bike->color);
+    // printf("bike->light[LAST_LIGHT].x %d\n", bike->light[LAST_LIGHT].x);
     display_drawLine(bike->light_current.x, bike->light_current.y, last_light.x,
                      last_light.y, DISPLAY_BLACK);
     break;
   case DYING_ST:
+  last_light = bike->light_current;
+    switch (bike->light_direction) {
+    case LEFT:
+      bike->light_current.x -= CONFIG_BIKE_DISTANCE_PER_TICK;
+      break;
+    case RIGHT:
+      bike->light_current.x += CONFIG_BIKE_DISTANCE_PER_TICK;
+      break;
+    case UP:
+      bike->light_current.y -= CONFIG_BIKE_DISTANCE_PER_TICK;
+      break;
+    case DOWN:
+      bike->light_current.y += CONFIG_BIKE_DISTANCE_PER_TICK;
+      break;
+    }
+    display_drawLine(bike->light_current.x, bike->light_current.y, last_light.x,
+                     last_light.y, DISPLAY_BLACK);
     break;
   case DEAD_ST:
     break;

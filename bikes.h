@@ -38,7 +38,7 @@ void first_bike_init(bike_t *bike);
 void second_bike_init(bike_t *bike);
 
 ////////// State Machine TICK Function //////////
-void bike_tick(bike_t *bike/*, display_point_t *enemy_light*/);
+void bike_tick(bike_t *bike, bike_t *enemyBike);
 
 // Return whether the given bike is dead.
 bool bike_is_dead(bike_t *bike);
