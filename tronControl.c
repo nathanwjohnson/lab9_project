@@ -15,6 +15,7 @@
 #define TEXT_SIZE 2
 #define LEFT 0
 #define RIGHT 1
+#define TICK_PERIOD 50E-3
 
 // TRON states
 enum tron_state_t {
@@ -37,6 +38,46 @@ static uint64_t win_num_ticks = 0;
 bool ONE_PLAYER_GAME = true;
 bool PLAYER_ONE_COLOR = true;
 static uint64_t location = 0;
+
+
+// Prints our debug statements to the console
+static void debugStatePrint() {
+  static enum tron_state_t previousState;
+  static bool firstPass = true;
+
+  // Prints to the console what state we are currently in as well as the x and y
+  // coordinates of the points that we touch
+  if ((previousState != currentState) || firstPass) {
+    firstPass = false;
+    previousState = currentState;
+    // Each case is for a different state and prints to the console where we are
+    // at
+    switch (currentState) {
+    case DISPLAY_ST:
+      printf("DISPLAY_ST\n");
+      break;
+    case GAME_MODE:
+      printf("GAME_MODE\n");
+      break;
+    case COLOR_P1:
+      printf("COLOR_P1\n");
+      break;
+    case COLOR_P2:
+      printf("COLOR_P2\n");
+      break;
+    case GRID:
+      printf("GRID\n");
+      break;
+    case TICK_GAME:
+      printf("TICK_GAME\n");
+      break;
+    case WIN:
+      printf("WIN\n");
+      break;
+    }
+  }
+}
+
 
 int tron_getLocationFromPoint(display_point_t point) {
   
@@ -197,19 +238,35 @@ static void eraseGrid() {
   }
 }
 
+
+
 // Initialize the game control logic
 // This function will initialize all missiles, stats, plane, etc.
-void tronControl_init() { display_fillScreen(DISPLAY_BLACK); }
+void tronControl_init() {
+  display_init();
+  touchscreen_init(TICK_PERIOD);
+  buttons_init();
+  display_fillScreen(DISPLAY_BLACK);
+  currentState = DISPLAY_ST;
+  delay_num_ticks = 5 / TICK_PERIOD;
+  grid_num_ticks = 5 / TICK_PERIOD;
+  }
+
+
 
 // Tick the game control logic
 //
 // This function should tick the missiles, handle screen touches, collisions,
 // and updating statistics.
 void tronControl_tick() {
-  
+  debugStatePrint();
+
+  tronControl_init();
+
   //Mealy --> Transition
   switch (currentState) {
   case DISPLAY_ST:
+    printf("Delay Count: %ld\n", delay_cnt);
     if (delay_cnt == delay_num_ticks) {
       eraseTitleScreen();
       delay_cnt = 0;
