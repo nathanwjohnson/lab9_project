@@ -29,11 +29,11 @@ void main() {
   display_fillScreen(DISPLAY_BLACK);
 
   for (uint16_t i = 0; i < 320; i = i + 10) {
-    display_drawLine(i, 0, i, 240, DISPLAY_DARK_RED);
+    //display_drawLine(i, 0, i, 240, DISPLAY_DARK_RED);
   }
 
   for (uint16_t i = 0; i < 240; i = i + 10) {
-    display_drawLine(0, i, 320, i, DISPLAY_DARK_RED);
+    //display_drawLine(0, i, 320, i, DISPLAY_DARK_RED);
   }
 
   // Initialize timer interrupts

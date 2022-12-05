@@ -23,27 +23,44 @@ direction_t computeNextMove(bike_t *bike, bike_t *enemyBike) {
   uint32_t yPos = bike->current.y / 10;
   uint32_t xnext = bike->current.x / 10;
   uint32_t ynext = bike->current.y / 10;
+  uint32_t xleft = bike->current.x / 10;
+  uint32_t yleft = bike->current.y / 10;
+  uint32_t xright = bike->current.x / 10;
+  uint32_t yright = bike->current.y / 10;
   direction_t choice;
   switch (bike->direction) {
   case LEFT:
     xnext -= 1;
+    yleft += 1;
+    yright -= 1;
     break;
   case RIGHT:
     xnext += 1;
+    yleft -= 1;
+    yright += 1;
     break;
   case UP:
     ynext -= 1;
+    xleft -= 1;
+    xright += 1;
     break;
   case DOWN:
     ynext += 1;
+    xleft += 1;
+    xright -= 1;
     break;
   }
+
   if (tronBoard[ynext][xnext] == 0) {
     choice = 2;
-  } else {
+  } else if (tronBoard[yleft][xleft] == 0) {
+    choice = 0;
+  } else if (tronBoard[yright][xright] == 0) {
     choice = 1;
+  } else {
+    choice = 2;
   }
-  //printBoard();
+  // printBoard();
   return choice;
 }
 
