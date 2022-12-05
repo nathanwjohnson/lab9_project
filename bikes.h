@@ -10,12 +10,13 @@ typedef enum {
   LEFT,
   RIGHT,
   UP,
-  DOWN,
+  DOWN
 } direction_t;
 
 typedef enum {
   PLAYER_1,
-  PLAYER_2
+  PLAYER_2,
+  COMPUTER_PLAYER
 } bike_type_t;
 
 typedef struct {
@@ -33,15 +34,17 @@ typedef struct {
 
 } bike_t;
 
-void first_bike_init(bike_t *bike);
+void first_player_bike_init(bike_t *bike);
 
-void second_bike_init(bike_t *bike);
+void second_player_bike_init(bike_t *bike);
+
+void computer_bike_init(bike_t *bike);
 
 ////////// State Machine TICK Function //////////
 void bike_tick(bike_t *bike, bike_t *enemyBike);
 
 // Return whether the given bike is dead.
-bool bike_is_dead(bike_t *bike);
+bool bike_has_lost(bike_t *bike);
 
 void enemy_turn(bike_t *bike, direction_t direction);
 

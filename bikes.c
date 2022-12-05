@@ -1,5 +1,6 @@
 #include "bikes.h"
 #include "buttons.h"
+#include "computer.h"
 #include "config.h"
 #include "display.h"
 #include <stdbool.h>
@@ -10,9 +11,9 @@
 #define GRID_X (DISPLAY_WIDTH / GRID_WIDTH)
 #define GRID_Y (DISPLAY_HEIGHT / GRID_WIDTH)
 #define DIRECTIONS 4
-#define BIKE_1_START_X 50
+#define BIKE_1_START_X 40
 #define BIKE_1_START_Y 120
-#define BIKE_2_START_X 270
+#define BIKE_2_START_X 280
 #define BIKE_2_START_Y 120
 #define LAST_LIGHT (LIGHT_LENGTH - 1)
 
@@ -22,7 +23,7 @@
 uint8_t BUTTON_VALUES;
 uint16_t counter = 0;
 
-enum bike_st_t { INIT_ST, MOVING_ST, DYING_ST, DEAD_ST };
+enum bike_st_t { INIT_ST, MOVING_ST, LOST_ST, WIN_ST };
 
 display_point_t last_point, last_light;
 
@@ -62,7 +63,7 @@ void update_light(bike_t *bike) {
   bike->light[0] = bike->current;
 }
 
-void first_bike_init(bike_t *bike) {
+void first_player_bike_init(bike_t *bike) {
   counter = 0;
   bike->current.x = BIKE_1_START_X;
   bike->current.y = BIKE_1_START_Y;
@@ -89,7 +90,7 @@ void first_bike_init(bike_t *bike) {
   bike->type = PLAYER_1;
 }
 
-void second_bike_init(bike_t *bike) {
+void second_player_bike_init(bike_t *bike) {
   counter = 0;
   bike->current.x = BIKE_2_START_X;
   bike->current.y = BIKE_2_START_Y;
@@ -116,6 +117,33 @@ void second_bike_init(bike_t *bike) {
   bike->type = PLAYER_2;
 }
 
+void computer_bike_init(bike_t *bike) {
+  counter = 0;
+  bike->current.x = BIKE_2_START_X;
+  bike->current.y = BIKE_2_START_Y;
+
+  bike->direction = LEFT;
+  bike->next.x = BIKE_2_START_X;
+  bike->next.y = BIKE_2_START_Y;
+  bike->next_direction = DOWN;
+  bike_next(bike);
+
+  for (uint16_t i = 0; i < LIGHT_LENGTH; i++) {
+    bike->light[i].x = BIKE_2_START_X;
+    bike->light[i].y = BIKE_2_START_Y;
+  }
+
+  bike->light_current.x = bike->current.x = BIKE_2_START_X + 10;
+  bike->light_current.y = bike->current.y = BIKE_2_START_Y;
+
+  bike->light_direction = LEFT;
+
+  bike->color = DISPLAY_MAGENTA;
+  bike->currentState = INIT_ST;
+
+  bike->type = COMPUTER_PLAYER;
+}
+
 ////////// State Machine TICK Function //////////
 void bike_tick(bike_t *bike, bike_t *enemyBike) {
   // printf("Entered bike_tick\n");
@@ -124,8 +152,10 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
   switch (bike->currentState) {
   // moves from init to moving
   case INIT_ST:
-    if (bike->type == PLAYER_1 || counter >= 5) {
+    // makes bike2 wait 1 tick until it starts
+    if (bike->type == PLAYER_1 || counter >= 1) {
       bike->currentState = MOVING_ST;
+      counter = 0;
     } else {
       counter++;
     }
@@ -134,9 +164,10 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
   case MOVING_ST:
     // printf("Entered MOVING_ST\n");
 
-    if (bike->current.x == 0 || bike->current.x == 320 ||
-        bike->current.y == 0 || bike->current.y == 240) {
-      bike->currentState = DEAD_ST;
+    if (bike->current.x <= 0 || bike->current.x >= 320 ||
+        bike->current.y <= 0 || bike->current.y >= 240) {
+      bike->currentState = LOST_ST;
+      enemyBike->currentState = WIN_ST;
     }
 
     BUTTON_VALUES = buttons_read();
@@ -160,9 +191,17 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
 
     if (bike->current.x == bike->next.x && bike->current.y == bike->next.y) {
       for (uint16_t i = 0; i < LIGHT_LENGTH; i++) {
+        // checks for collisions with enemy light trail
         if (bike->current.x == enemyBike->light[i].x &&
             bike->current.y == enemyBike->light[i].y) {
-          bike->currentState = DYING_ST;
+          bike->currentState = LOST_ST;
+          enemyBike->currentState = WIN_ST;
+          break;
+          // checks for collisions with your own light trail
+        } else if (bike->current.x == bike->light[i].x &&
+                   bike->current.y == bike->light[i].y) {
+          bike->currentState = LOST_ST;
+          enemyBike->currentState = WIN_ST;
           break;
         }
       }
@@ -183,6 +222,10 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
                          bike->light[i - 1].x, bike->light[i - 1].y, color);
       } */
 
+      if (bike->type == COMPUTER_PLAYER) {
+        bike->next_direction = computeNextMove(bike, enemyBike);
+      }
+
       enemy_turn(bike, bike->next_direction);
       // update light
       update_light(bike);
@@ -195,9 +238,13 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
     }
     break;
   // it is dead do nothing till initialized
-  case DYING_ST:
+  case LOST_ST:
+    /*for (int16_t i = 1; i < LIGHT_LENGTH; i++) {
+          display_drawLine(bike->light[i].x, bike->light[i].y,
+                           bike->light[i - 1].x, bike->light[i - 1].y, color);
+        } */
     break;
-  case DEAD_ST:
+  case WIN_ST:
     break;
   }
 
@@ -253,34 +300,42 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
     display_drawLine(bike->light_current.x, bike->light_current.y, last_light.x,
                      last_light.y, DISPLAY_BLACK);
     break;
-  case DYING_ST:
-  last_light = bike->light_current;
-    switch (bike->light_direction) {
-    case LEFT:
-      bike->light_current.x -= CONFIG_BIKE_DISTANCE_PER_TICK;
-      break;
-    case RIGHT:
-      bike->light_current.x += CONFIG_BIKE_DISTANCE_PER_TICK;
-      break;
-    case UP:
-      bike->light_current.y -= CONFIG_BIKE_DISTANCE_PER_TICK;
-      break;
-    case DOWN:
-      bike->light_current.y += CONFIG_BIKE_DISTANCE_PER_TICK;
-      break;
+  case LOST_ST:
+    // display_drawLine(bike->light_current.x, bike->light_current.y,
+    // last_light.x,
+    //                  last_light.y, DISPLAY_BLACK);
+    printf("bike->light[LAST_LIGHT].x %d\n", counter);
+    if (counter < 5) {
+      for (int16_t i = 1; i < LIGHT_LENGTH; i++) {
+        display_drawLine(bike->light[i].x, bike->light[i].y,
+                         bike->light[i - 1].x, bike->light[i - 1].y,
+                         DISPLAY_BLACK);
+      }
+      counter++;
+    } else if (counter < 10) {
+      for (int16_t i = 1; i < LIGHT_LENGTH; i++) {
+        display_drawLine(bike->light[i].x, bike->light[i].y,
+                         bike->light[i - 1].x, bike->light[i - 1].y,
+                         DISPLAY_RED);
+      }
+      counter++;
+    } else {
+      counter = 0;
     }
-    display_drawLine(bike->light_current.x, bike->light_current.y, last_light.x,
-                     last_light.y, DISPLAY_BLACK);
     break;
-  case DEAD_ST:
+  case WIN_ST:
     break;
   }
 }
 
 // Return whether the given bike is dead.
-bool bike_is_dead(bike_t *bike) {
-  if (bike->currentState == DEAD_ST)
+bool bike_has_lost(bike_t *bike) {
+  // printf("bike->light[LAST_LIGHT].x %d\n", bike->currentState);
+  if (bike->currentState == LOST_ST)
     return true;
+  else {
+    return false;
+  }
 }
 
 void enemy_turn(bike_t *bike, direction_t direction) {
