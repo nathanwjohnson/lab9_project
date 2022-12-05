@@ -152,8 +152,8 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
   switch (bike->currentState) {
   // moves from init to moving
   case INIT_ST:
-    // makes bike2 wait 1 tick until it starts
-    if (bike->type == PLAYER_1 || counter >= 1) {
+    // makes bike2 wait 5 ticks until it starts
+    if (bike->type == PLAYER_1 || counter >= 5) {
       bike->currentState = MOVING_ST;
       counter = 0;
     } else {
@@ -272,19 +272,22 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
       bike->current.y += CONFIG_BIKE_DISTANCE_PER_TICK;
       break;
     }
-    switch (bike->light_direction) {
-    case LEFT:
-      bike->light_current.x -= CONFIG_BIKE_DISTANCE_PER_TICK;
-      break;
-    case RIGHT:
-      bike->light_current.x += CONFIG_BIKE_DISTANCE_PER_TICK;
-      break;
-    case UP:
-      bike->light_current.y -= CONFIG_BIKE_DISTANCE_PER_TICK;
-      break;
-    case DOWN:
-      bike->light_current.y += CONFIG_BIKE_DISTANCE_PER_TICK;
-      break;
+    if ((bike->light[LAST_LIGHT].x != bike->light[LAST_LIGHT - 1].x) ||
+        (bike->light[LAST_LIGHT].y != bike->light[LAST_LIGHT - 1].y)) {
+      switch (bike->light_direction) {
+      case LEFT:
+        bike->light_current.x -= CONFIG_BIKE_DISTANCE_PER_TICK;
+        break;
+      case RIGHT:
+        bike->light_current.x += CONFIG_BIKE_DISTANCE_PER_TICK;
+        break;
+      case UP:
+        bike->light_current.y -= CONFIG_BIKE_DISTANCE_PER_TICK;
+        break;
+      case DOWN:
+        bike->light_current.y += CONFIG_BIKE_DISTANCE_PER_TICK;
+        break;
+      }
     }
     // uint64_t color = rand() % 4;
     // if (color == 1) {
@@ -296,12 +299,46 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
     // }else if (color == 4) {
     //   color = DISPLAY_WHITE;
     // }
-
     display_drawLine(bike->current.x, bike->current.y, last_point.x,
                      last_point.y, bike->color);
     // printf("bike->light[LAST_LIGHT].x %d\n", bike->light[LAST_LIGHT].x);
-    display_drawLine(bike->light_current.x, bike->light_current.y, last_light.x,
-                     last_light.y, DISPLAY_BLACK);
+    // if (counter > LIGHT_LENGTH * 10) {
+    // printf("\n");
+    // for (int16_t i = 1; i < LIGHT_LENGTH; i++) {
+    //   display_drawLine(bike->light[i].x + 1, bike->light[i].y + 1,
+    //                    bike->light[i].x + 1, bike->light[i].y + 1,
+    //                    DISPLAY_RED);
+    // }
+    // display_drawLine(bike->light[LAST_LIGHT].x + 1,
+    //                  bike->light[LAST_LIGHT].y + 1,
+    //                  bike->light[LAST_LIGHT].x + 1,
+    //                  bike->light[LAST_LIGHT].y + 1, DISPLAY_BLACK);
+    // printf(" %d %d\n", bike->light[LAST_LIGHT].x,
+    // bike->light[LAST_LIGHT-1].x);
+    if ((bike->light[LAST_LIGHT].x != bike->light[LAST_LIGHT - 1].x) ||
+        (bike->light[LAST_LIGHT].y != bike->light[LAST_LIGHT - 1].y)) {
+      // printf("here\n");
+      display_drawLine(bike->light_current.x, bike->light_current.y,
+                       last_light.x, last_light.y, DISPLAY_BLACK);
+    } else if (counter < 20) {
+      display_drawLine(BIKE_1_START_X, BIKE_1_START_Y, BIKE_1_START_X - 10,
+                       BIKE_1_START_Y, DISPLAY_BLACK);
+      display_drawLine(BIKE_2_START_X, BIKE_2_START_Y, BIKE_2_START_X + 10,
+                       BIKE_2_START_Y, DISPLAY_BLACK);
+      counter++;
+    }
+    // } else if (counter < 2) {
+    //   if (bike->type == PLAYER_1) {
+    //     display_drawLine(last_light.x - 10, last_light.y, last_light.x,
+    //                      last_light.y, bike->color);
+    //   } else {
+    //     display_drawLine(last_light.x + 10, last_light.y, last_light.x,
+    //                      last_light.y, bike->color);
+    //   }
+    //   counter++;
+    // } else {
+    //   counter++;
+    // }
     break;
   case LOST_ST:
     // display_drawLine(bike->light_current.x, bike->light_current.y,
@@ -309,8 +346,9 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
     //                  last_light.y, DISPLAY_BLACK);
     // printf("bike->light[LAST_LIGHT].x %d\n", counter);
     if (counter < 5) {
-      display_drawLine(bike->light_current.x, bike->light_current.y, bike->light[LAST_LIGHT].x,
-                       bike->light[LAST_LIGHT].y, DISPLAY_BLACK);
+      display_drawLine(bike->light_current.x, bike->light_current.y,
+                       bike->light[LAST_LIGHT].x, bike->light[LAST_LIGHT].y,
+                       DISPLAY_BLACK);
       for (int16_t i = 1; i < LIGHT_LENGTH; i++) {
         display_drawLine(bike->light[i].x, bike->light[i].y,
                          bike->light[i - 1].x, bike->light[i - 1].y,
@@ -318,8 +356,9 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
       }
       counter++;
     } else if (counter < 10) {
-      display_drawLine(bike->light_current.x, bike->light_current.y, bike->light[LAST_LIGHT].x,
-                       bike->light[LAST_LIGHT].y, DISPLAY_RED);
+      display_drawLine(bike->light_current.x, bike->light_current.y,
+                       bike->light[LAST_LIGHT].x, bike->light[LAST_LIGHT].y,
+                       DISPLAY_RED);
       for (int16_t i = 1; i < LIGHT_LENGTH; i++) {
         display_drawLine(bike->light[i].x, bike->light[i].y,
                          bike->light[i - 1].x, bike->light[i - 1].y,
