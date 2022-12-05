@@ -346,9 +346,12 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
     //                  last_light.y, DISPLAY_BLACK);
     // printf("bike->light[LAST_LIGHT].x %d\n", counter);
     if (counter < 5) {
-      display_drawLine(bike->light_current.x, bike->light_current.y,
-                       bike->light[LAST_LIGHT].x, bike->light[LAST_LIGHT].y,
-                       DISPLAY_BLACK);
+      if ((bike->light[LAST_LIGHT].x == bike->light[LAST_LIGHT - 1].x) ||
+          (bike->light[LAST_LIGHT].y == bike->light[LAST_LIGHT - 1].y)) {
+        display_drawLine(bike->light_current.x, bike->light_current.y,
+                         bike->light[LAST_LIGHT].x, bike->light[LAST_LIGHT].y,
+                         DISPLAY_BLACK);
+      }
       for (int16_t i = 1; i < LIGHT_LENGTH; i++) {
         display_drawLine(bike->light[i].x, bike->light[i].y,
                          bike->light[i - 1].x, bike->light[i - 1].y,
@@ -356,9 +359,12 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
       }
       counter++;
     } else if (counter < 10) {
-      display_drawLine(bike->light_current.x, bike->light_current.y,
-                       bike->light[LAST_LIGHT].x, bike->light[LAST_LIGHT].y,
-                       DISPLAY_RED);
+      if ((bike->light[LAST_LIGHT].x == bike->light[LAST_LIGHT - 1].x) ||
+          (bike->light[LAST_LIGHT].y == bike->light[LAST_LIGHT - 1].y)) {
+        display_drawLine(bike->light_current.x, bike->light_current.y,
+                         bike->light[LAST_LIGHT].x, bike->light[LAST_LIGHT].y,
+                         DISPLAY_RED);
+      }
       for (int16_t i = 1; i < LIGHT_LENGTH; i++) {
         display_drawLine(bike->light[i].x, bike->light[i].y,
                          bike->light[i - 1].x, bike->light[i - 1].y,
