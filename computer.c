@@ -24,7 +24,8 @@ direction_t computeNextMove(bike_t *bike, bike_t *enemyBike) {
   uint32_t xnext = bike->current.x / 10;
   uint32_t ynext = bike->current.y / 10;
   direction_t choice;
-  display_drawLine(xPos * 10 + 1, yPos * 10 + 1, xPos * 10 + 1, yPos * 10 + 1, DISPLAY_CYAN);
+  display_drawLine(xPos * 10 + 1, yPos * 10 + 1, xPos * 10 + 1, yPos * 10 + 1,
+                   DISPLAY_CYAN);
   switch (bike->direction) {
   case LEFT:
     xnext -= 1;
@@ -39,7 +40,8 @@ direction_t computeNextMove(bike_t *bike, bike_t *enemyBike) {
     ynext += 1;
     break;
   }
-  display_drawLine(xnext * 10 + 1, ynext * 10 + 1, xnext * 10 + 1, ynext * 10 + 1, DISPLAY_YELLOW);
+  display_drawLine(xnext * 10 + 1, ynext * 10 + 1, xnext * 10 + 1,
+                   ynext * 10 + 1, DISPLAY_YELLOW);
   printf("%d %d %d\n", xnext, ynext, tronBoard[ynext][xnext]);
   if (tronBoard[ynext][xnext] == 0) {
     choice = 2;
@@ -63,10 +65,6 @@ void initBoard() {
   tronBoard[12][4] = 1;
 }
 
-void fillSquare(uint32_t x, uint32_t y) {
-  tronBoard[y/10][x/10] = 1;
-}
+void fillSquare(uint32_t x, uint32_t y) { tronBoard[y / 10][x / 10] = 1; }
 
-void clearSquare(uint32_t x, uint32_t y) {
-  tronBoard[y/10][x/10] = 0;
-}
+void clearSquare(uint32_t x, uint32_t y) { tronBoard[y / 10][x / 10] = 0; }
