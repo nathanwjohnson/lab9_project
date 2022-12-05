@@ -46,6 +46,7 @@ void main() {
   intervalTimer_enableInterrupt(INTERVAL_TIMER_0);
   intervalTimer_start(INTERVAL_TIMER_0);
 
+  initBoard();
   first_player_bike_init(&bike[0]);
   // second_player_bike_init(&bike[1]);
   computer_bike_init(&bike[1]);

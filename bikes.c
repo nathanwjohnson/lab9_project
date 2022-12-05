@@ -196,13 +196,11 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
             bike->current.y == enemyBike->light[i].y) {
           bike->currentState = LOST_ST;
           enemyBike->currentState = WIN_ST;
-          break;
           // checks for collisions with your own light trail
         } else if (bike->current.x == bike->light[i].x &&
                    bike->current.y == bike->light[i].y) {
           bike->currentState = LOST_ST;
           enemyBike->currentState = WIN_ST;
-          break;
         }
       }
 
@@ -226,13 +224,18 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
         bike->next_direction = computeNextMove(bike, enemyBike);
       }
 
+      fillSquare(bike->current.x, bike->current.y);
+
       enemy_turn(bike, bike->next_direction);
       // update light
       update_light(bike);
+      clearSquare(bike->light[LAST_LIGHT].x, bike->light[LAST_LIGHT].y);
       // update light direction
       light_direction(bike);
       // update bike next destination
       bike_next(bike);
+
+      fillSquare(bike->next.x, bike->next.y);
 
       bike->next_direction = DOWN;
     }
@@ -304,8 +307,10 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
     // display_drawLine(bike->light_current.x, bike->light_current.y,
     // last_light.x,
     //                  last_light.y, DISPLAY_BLACK);
-    printf("bike->light[LAST_LIGHT].x %d\n", counter);
+    // printf("bike->light[LAST_LIGHT].x %d\n", counter);
     if (counter < 5) {
+      display_drawLine(bike->light_current.x, bike->light_current.y, bike->light[LAST_LIGHT].x,
+                       bike->light[LAST_LIGHT].y, DISPLAY_BLACK);
       for (int16_t i = 1; i < LIGHT_LENGTH; i++) {
         display_drawLine(bike->light[i].x, bike->light[i].y,
                          bike->light[i - 1].x, bike->light[i - 1].y,
@@ -313,6 +318,8 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
       }
       counter++;
     } else if (counter < 10) {
+      display_drawLine(bike->light_current.x, bike->light_current.y, bike->light[LAST_LIGHT].x,
+                       bike->light[LAST_LIGHT].y, DISPLAY_RED);
       for (int16_t i = 1; i < LIGHT_LENGTH; i++) {
         display_drawLine(bike->light[i].x, bike->light[i].y,
                          bike->light[i - 1].x, bike->light[i - 1].y,
