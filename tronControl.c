@@ -5,6 +5,7 @@
 #include "interrupts.h"
 #include "intervalTimer.h"
 #include "touchscreen.h"
+#include "bikes.h"
 
  #include <math.h>
  #include <stdbool.h>
@@ -15,10 +16,11 @@
 #define TEXT_SIZE 2
 #define LEFT 0
 #define RIGHT 1
-#define TICK_PERIOD 50E-3
+#define TICK_PERIOD (CONFIG_GAME_TIMER_PERIOD)
 
 // TRON states
 enum tron_state_t {
+  INIT_ST,
   DISPLAY_ST,
   GAME_MODE,
   COLOR_P1,
@@ -39,6 +41,10 @@ bool ONE_PLAYER_GAME = true;
 bool PLAYER_ONE_COLOR = true;
 static uint64_t location = 0;
 
+bike_t bike[2];
+bike_t* first_bike = &bike[0];
+bike_t* second_bike = &bike[1];
+
 
 // Prints our debug statements to the console
 static void debugStatePrint() {
@@ -53,6 +59,9 @@ static void debugStatePrint() {
     // Each case is for a different state and prints to the console where we are
     // at
     switch (currentState) {
+    case INIT_ST:
+      printf("INIT_ST\n");
+      break;
     case DISPLAY_ST:
       printf("DISPLAY_ST\n");
       break;
@@ -214,8 +223,11 @@ static void eraseColorScreen() {
   display_setTextSize(2);
   display_setTextColor(DISPLAY_BLACK);
   display_setCursor(35, 20);
-  display_print("CHOOSE PLAYER1 COLOR:");
-  display_print("CHOOSE PLAYER2 COLOR:");
+  if (PLAYER_ONE_COLOR == true) {
+    display_print("CHOOSE PLAYER1 COLOR:");
+  } else {
+    display_print("CHOOSE PLAYER2 COLOR:");
+  }
 }
 
 static void showGrid() {
@@ -243,13 +255,11 @@ static void eraseGrid() {
 // Initialize the game control logic
 // This function will initialize all missiles, stats, plane, etc.
 void tronControl_init() {
-  display_init();
-  touchscreen_init(TICK_PERIOD);
+  display_init(); 
   buttons_init();
-  display_fillScreen(DISPLAY_BLACK);
-  currentState = DISPLAY_ST;
-  delay_num_ticks = 5 / TICK_PERIOD;
-  grid_num_ticks = 5 / TICK_PERIOD;
+  currentState = INIT_ST;
+  delay_num_ticks = 2 / TICK_PERIOD;
+  grid_num_ticks = 2 / TICK_PERIOD;
   }
 
 
@@ -261,35 +271,65 @@ void tronControl_init() {
 void tronControl_tick() {
   debugStatePrint();
 
-  tronControl_init();
-
   //Mealy --> Transition
   switch (currentState) {
+  case INIT_ST:
+    printTitleScreen();
+    currentState = DISPLAY_ST;
+    break;
   case DISPLAY_ST:
     printf("Delay Count: %ld\n", delay_cnt);
     if (delay_cnt == delay_num_ticks) {
       eraseTitleScreen();
       delay_cnt = 0;
       currentState = GAME_MODE;
+      printModeScreen();
     }
     break;
   case GAME_MODE:
     if (touchscreen_get_status() == TOUCHSCREEN_RELEASED) {
-      tron_getLocationFromPoint(touchscreen_get_location());
+      eraseModeScreen();
       if ((tron_getLocationFromPoint(touchscreen_get_location())) == LEFT) {
           ONE_PLAYER_GAME = true;
-          currentState = COLOR_P1;
-          PLAYER_ONE_COLOR = true;
+          first_player_bike_init(first_bike);
+          computer_bike_init(second_bike);
       } else {
           ONE_PLAYER_GAME = false;
-          currentState = COLOR_P1;
-          PLAYER_ONE_COLOR = true;
+          first_player_bike_init(first_bike);
+          second_player_bike_init(second_bike);
       }
+      currentState = COLOR_P1;
+      PLAYER_ONE_COLOR = true;
+      touchscreen_ack_touch();
+      printColorScreen();
     }
     break;
   case COLOR_P1:
+    if (touchscreen_get_status() == TOUCHSCREEN_RELEASED) {
+      eraseColorScreen();
+      if ((tron_getLocationFromPoint(touchscreen_get_location())) == LEFT) {
+          first_bike->color = DISPLAY_WHITE;
+      } else {
+          first_bike->color = DISPLAY_WHITE;
+      }
+      currentState = COLOR_P2;
+      PLAYER_ONE_COLOR = false;
+      touchscreen_ack_touch();
+      printColorScreen();
+    }
     break;
   case COLOR_P2:
+    if (touchscreen_get_status() == TOUCHSCREEN_RELEASED) {
+      eraseColorScreen();
+      if ((tron_getLocationFromPoint(touchscreen_get_location())) == LEFT) {
+          second_bike->color = DISPLAY_WHITE;
+      } else {
+          second_bike->color = DISPLAY_WHITE;
+      }
+      currentState = GRID;
+      touchscreen_ack_touch();
+      showGrid();
+    }
     break;
   case GRID:
     if (grid_cnt == grid_num_ticks) {
@@ -308,22 +348,19 @@ void tronControl_tick() {
   switch (currentState) {
   case DISPLAY_ST:
     delay_cnt++;
-    printTitleScreen();
     break;
   case GAME_MODE:
-    printModeScreen();
     break;
   case COLOR_P1:
-    printColorScreen();
     break;
   case COLOR_P2:
-    printColorScreen();
     break;
   case GRID:
     grid_cnt++;
-    showGrid();
     break;
   case TICK_GAME:
+    bike_tick(first_bike, second_bike);
+    bike_tick(second_bike, first_bike);
     break;
   case WIN:
     win_cnt++;
