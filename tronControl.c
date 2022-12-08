@@ -6,6 +6,7 @@
 #include "intervalTimer.h"
 #include "touchscreen.h"
 #include "bikes.h"
+#include "computer.h"
 
  #include <math.h>
  #include <stdbool.h>
@@ -14,8 +15,12 @@
  #include <string.h>
 
 #define TEXT_SIZE 2
-#define LEFT 0
-#define RIGHT 1
+#define TOP_LEFT 0
+#define TOP_RIGHT 1
+#define BOTTOM_LEFT 2
+#define BOTTOM_RIGHT 3
+#define LEFT_HALF 4
+#define RIGHT_HALF 5
 #define TICK_PERIOD (CONFIG_GAME_TIMER_PERIOD)
 
 // TRON states
@@ -27,6 +32,7 @@ enum tron_state_t {
   COLOR_P2,
   GRID,
   TICK_GAME,
+  END_GAME_COUNTDOWN,
   WIN
 };
 static enum tron_state_t currentState;
@@ -35,11 +41,15 @@ static uint64_t delay_cnt = 0;
 static uint64_t delay_num_ticks = 0;
 static uint64_t grid_cnt = 0;
 static uint64_t grid_num_ticks = 0;
+static uint64_t end_game_cnt = 0;
+static uint64_t end_num_ticks = 0;
 static uint64_t win_cnt = 0;
 static uint64_t win_num_ticks = 0;
 bool ONE_PLAYER_GAME = true;
 bool PLAYER_ONE_COLOR = true;
+bool PLAYER_ONE_LOST = true;
 static uint64_t location = 0;
+static uint64_t half = 0;
 
 bike_t bike[2];
 bike_t* first_bike = &bike[0];
@@ -80,6 +90,8 @@ static void debugStatePrint() {
     case TICK_GAME:
       printf("TICK_GAME\n");
       break;
+    case END_GAME_COUNTDOWN:
+      printf("END_GAME_COUNTDOWN\n");
     case WIN:
       printf("WIN\n");
       break;
@@ -88,17 +100,35 @@ static void debugStatePrint() {
 }
 
 
-int tron_getLocationFromPoint(display_point_t point) {
+void tron_getLocationFromPoint(display_point_t point) {
   
   int16_t x = point.x;
   int16_t y = point.y;
 
   uint16_t midpoint = (320 / 2);
+  uint16_t color_middle = 145;
 
-  if (x < midpoint) {
-    location = LEFT;
+  if ((x <= midpoint) && (y <= color_middle)) {
+    location = TOP_LEFT;
+  } else if ((x <= midpoint) && (y >= color_middle)) {
+    location = BOTTOM_LEFT;
+  } else if ((x > midpoint) && (y < color_middle)) {
+    location = TOP_RIGHT;
   } else {
-    location = RIGHT;
+    location = BOTTOM_RIGHT;
+  }
+}
+
+void tron_getHalfFromPoint(display_point_t point) {
+
+  int16_t x = point.x;
+
+  uint16_t midpoint = (320 / 2);
+
+  if (x <= midpoint) {
+    half = LEFT_HALF;
+  } else {
+    half = RIGHT_HALF;
   }
 }
 
@@ -250,6 +280,22 @@ static void eraseGrid() {
   }
 }
 
+static void printWinScreen() {
+  display_setCursor(35, (240 / 2));
+  display_setTextSize(4);
+  if (PLAYER_ONE_LOST) {
+    display_setTextColor(second_bike->color);
+    if (ONE_PLAYER_GAME) {
+      display_print("PLAYER 2 WINS!!");
+    } else {
+      display_print("COMPUTER WINS!! YOU SUCK!!");
+    }
+  } else {
+    display_setTextColor(first_bike->color);
+    display_print("PLAYER 1 WINS!!");
+  }
+}
+
 
 
 // Initialize the game control logic
@@ -260,6 +306,8 @@ void tronControl_init() {
   currentState = INIT_ST;
   delay_num_ticks = 2 / TICK_PERIOD;
   grid_num_ticks = 2 / TICK_PERIOD;
+  end_num_ticks = 2 / TICK_PERIOD;
+  win_num_ticks = 2 / TICK_PERIOD;
   }
 
 
@@ -275,6 +323,7 @@ void tronControl_tick() {
   switch (currentState) {
   case INIT_ST:
     printTitleScreen();
+    initBoard();
     currentState = DISPLAY_ST;
     break;
   case DISPLAY_ST:
@@ -289,14 +338,19 @@ void tronControl_tick() {
   case GAME_MODE:
     if (touchscreen_get_status() == TOUCHSCREEN_RELEASED) {
       eraseModeScreen();
-      if ((tron_getLocationFromPoint(touchscreen_get_location())) == LEFT) {
+      tron_getHalfFromPoint(touchscreen_get_location());
+      if (half == LEFT_HALF) {
           ONE_PLAYER_GAME = true;
           first_player_bike_init(first_bike);
           computer_bike_init(second_bike);
+          printf("Touched at: %d\n", touchscreen_get_location().x);
+          printf("Player VS. Computer\n");
       } else {
           ONE_PLAYER_GAME = false;
           first_player_bike_init(first_bike);
           second_player_bike_init(second_bike);
+          printf("Touched at: %d\n", touchscreen_get_location().x);
+          printf("Player VS. Player\n");
       }
       currentState = COLOR_P1;
       PLAYER_ONE_COLOR = true;
@@ -307,10 +361,15 @@ void tronControl_tick() {
   case COLOR_P1:
     if (touchscreen_get_status() == TOUCHSCREEN_RELEASED) {
       eraseColorScreen();
-      if ((tron_getLocationFromPoint(touchscreen_get_location())) == LEFT) {
-          first_bike->color = DISPLAY_WHITE;
+      tron_getLocationFromPoint(touchscreen_get_location());
+      if (location == TOP_LEFT) {
+          first_bike->color = DISPLAY_CYAN;
+      } else if (location == TOP_RIGHT) {
+          first_bike->color = DISPLAY_MAGENTA;
+      } else if (location == BOTTOM_LEFT) {
+          first_bike->color = DISPLAY_GREEN;
       } else {
-          first_bike->color = DISPLAY_WHITE;
+          first_bike->color = DISPLAY_YELLOW;
       }
       currentState = COLOR_P2;
       PLAYER_ONE_COLOR = false;
@@ -321,10 +380,15 @@ void tronControl_tick() {
   case COLOR_P2:
     if (touchscreen_get_status() == TOUCHSCREEN_RELEASED) {
       eraseColorScreen();
-      if ((tron_getLocationFromPoint(touchscreen_get_location())) == LEFT) {
-          second_bike->color = DISPLAY_WHITE;
+      tron_getLocationFromPoint(touchscreen_get_location());
+      if (location == TOP_LEFT) {
+          second_bike->color = DISPLAY_CYAN;
+      } else if (location == TOP_RIGHT) {
+          second_bike->color = DISPLAY_MAGENTA;
+      } else if (location == BOTTOM_LEFT) {
+          second_bike->color = DISPLAY_GREEN;
       } else {
-          second_bike->color = DISPLAY_WHITE;
+          second_bike->color = DISPLAY_YELLOW;
       }
       currentState = GRID;
       touchscreen_ack_touch();
@@ -339,8 +403,22 @@ void tronControl_tick() {
     }
     break;
   case TICK_GAME:
+    if (bike_has_lost(first_bike)) {
+      PLAYER_ONE_LOST = true;
+      currentState = END_GAME_COUNTDOWN;
+    } else if (bike_has_lost(second_bike)) {
+      PLAYER_ONE_LOST = false;
+      currentState = END_GAME_COUNTDOWN;
+    }
+    break;
+  case END_GAME_COUNTDOWN:
+    if (end_game_cnt == end_num_ticks) {
+      currentState = WIN;
+    }
     break;
   case WIN:
+    printWinScreen();
+    if ()
     break;
   }
 
@@ -361,6 +439,11 @@ void tronControl_tick() {
   case TICK_GAME:
     bike_tick(first_bike, second_bike);
     bike_tick(second_bike, first_bike);
+    break;
+  case END_GAME_COUNTDOWN:
+    bike_tick(first_bike, second_bike);
+    bike_tick(second_bike, first_bike);
+    end_game_cnt++;
     break;
   case WIN:
     win_cnt++;
