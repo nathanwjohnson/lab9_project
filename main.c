@@ -61,7 +61,7 @@ int main() {
   intervalTimer_start(INTERVAL_TIMER_1);
 
   // Main game loop
-  while (isr_triggered_count < RUNTIME_TICKS) {
+  while (1) {
     while (!interrupt_flag)
       ;
     interrupt_flag = false;
@@ -69,6 +69,6 @@ int main() {
 
     tronControl_tick();
   }
-  printf("Handled %d of %d interrupts\n", isr_handled_count,
-         isr_triggered_count);
+  /*printf("Handled %d of %d interrupts\n", isr_handled_count,
+         isr_triggered_count);*/
 }

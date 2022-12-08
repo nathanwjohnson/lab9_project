@@ -1,18 +1,18 @@
 #include "tronControl.h"
+#include "bikes.h"
 #include "buttons.h"
+#include "computer.h"
 #include "config.h"
 #include "display.h"
 #include "interrupts.h"
 #include "intervalTimer.h"
 #include "touchscreen.h"
-#include "bikes.h"
-#include "computer.h"
 
- #include <math.h>
- #include <stdbool.h>
- #include <stdint.h>
- #include <stdio.h>
- #include <string.h>
+#include <math.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 #define TEXT_SIZE 2
 #define TOP_LEFT 0
@@ -52,9 +52,8 @@ static uint64_t location = 0;
 static uint64_t half = 0;
 
 bike_t bike[2];
-bike_t* first_bike = &bike[0];
-bike_t* second_bike = &bike[1];
-
+bike_t *first_bike = &bike[0];
+bike_t *second_bike = &bike[1];
 
 // Prints our debug statements to the console
 static void debugStatePrint() {
@@ -99,9 +98,8 @@ static void debugStatePrint() {
   }
 }
 
-
 void tron_getLocationFromPoint(display_point_t point) {
-  
+
   int16_t x = point.x;
   int16_t y = point.y;
 
@@ -145,10 +143,11 @@ static void printTitleScreen() {
   display_setTextColor(DISPLAY_CYAN);
   display_setCursor(20, 85);
   display_print("TRON");
-  display_setCursor(35, 185);
+  display_setCursor(20, 185);
   display_setTextSize(2);
   display_setTextColor(DISPLAY_YELLOW);
-  display_print("INSERT 1 COIN TO PLAY");
+  display_print("LEFT 2 BUTTONS: PLAYER 1\n");
+  display_print(" RIGHT 2 BUTTONS: PLAYER 2\n");
 }
 
 static void eraseTitleScreen() {
@@ -164,10 +163,11 @@ static void eraseTitleScreen() {
   display_setTextColor(DISPLAY_BLACK);
   display_setCursor(20, 85);
   display_print("TRON");
-  display_setCursor(35, 185);
+  display_setCursor(20, 185);
   display_setTextSize(2);
   display_setTextColor(DISPLAY_BLACK);
-  display_print("INSERT 1 COIN TO PLAY");
+  display_print("LEFT 2 BUTTONS: PLAYER 1\n");
+  display_print(" RIGHT 2 BUTTONS: PLAYER 2\n");
 }
 
 static void printModeScreen() {
@@ -281,12 +281,12 @@ static void eraseGrid() {
 }
 
 static void printWinScreen() {
-  display_setCursor(35, (240 / 2));
+  display_setCursor(35, ((240 / 2) - 10));
   display_setTextSize(3);
   if (PLAYER_ONE_LOST) {
     display_setTextColor(second_bike->color);
     if (ONE_PLAYER_GAME) {
-      display_print("COMPUTER WINS!! YOU SUCK!!");
+      display_print("COMPUTER WINS!!");
     } else {
       display_print("PLAYER 2 WINS!!");
     }
@@ -299,33 +299,32 @@ static void printWinScreen() {
 // Initialize the game control logic
 // This function will initialize all missiles, stats, plane, etc.
 void tronControl_init() {
-  display_init(); 
+  display_init();
   buttons_init();
+  display_fillScreen(DISPLAY_BLACK);
   currentState = INIT_ST;
-  delay_num_ticks = 2 / TICK_PERIOD;
+  delay_num_ticks = 5 / TICK_PERIOD;
   grid_num_ticks = 2 / TICK_PERIOD;
   end_num_ticks = 2 / TICK_PERIOD;
   win_num_ticks = 2 / TICK_PERIOD;
-  }
-
-
+}
 
 // Tick the game control logic
 //
 // This function should tick the missiles, handle screen touches, collisions,
 // and updating statistics.
 void tronControl_tick() {
-  debugStatePrint();
+  //debugStatePrint();
 
-  //Mealy --> Transition
+  // Mealy --> Transition
   switch (currentState) {
   case INIT_ST:
     printTitleScreen();
-    initBoard();
     currentState = DISPLAY_ST;
     break;
   case DISPLAY_ST:
-    printf("Delay Count: %ld\n", delay_cnt);
+    initBoard();
+    //printf("Delay Count: %ld\n", delay_cnt);
     if (delay_cnt == delay_num_ticks) {
       eraseTitleScreen();
       delay_cnt = 0;
@@ -334,21 +333,22 @@ void tronControl_tick() {
     }
     break;
   case GAME_MODE:
+    initBoard();
     if (touchscreen_get_status() == TOUCHSCREEN_RELEASED) {
       eraseModeScreen();
       tron_getHalfFromPoint(touchscreen_get_location());
       if (half == LEFT_HALF) {
-          ONE_PLAYER_GAME = true;
-          first_player_bike_init(first_bike);
-          computer_bike_init(second_bike);
-          printf("Touched at: %d\n", touchscreen_get_location().x);
-          printf("Player VS. Computer\n");
+        ONE_PLAYER_GAME = true;
+        first_player_bike_init(first_bike);
+        computer_bike_init(second_bike);
+        //printf("Touched at: %d\n", touchscreen_get_location().x);
+        //printf("Player VS. Computer\n");
       } else {
-          ONE_PLAYER_GAME = false;
-          first_player_bike_init(first_bike);
-          second_player_bike_init(second_bike);
-          printf("Touched at: %d\n", touchscreen_get_location().x);
-          printf("Player VS. Player\n");
+        ONE_PLAYER_GAME = false;
+        first_player_bike_init(first_bike);
+        second_player_bike_init(second_bike);
+        //printf("Touched at: %d\n", touchscreen_get_location().x);
+        //printf("Player VS. Player\n");
       }
       currentState = COLOR_P1;
       PLAYER_ONE_COLOR = true;
@@ -361,13 +361,13 @@ void tronControl_tick() {
       eraseColorScreen();
       tron_getLocationFromPoint(touchscreen_get_location());
       if (location == TOP_LEFT) {
-          first_bike->color = DISPLAY_CYAN;
+        first_bike->color = DISPLAY_CYAN;
       } else if (location == TOP_RIGHT) {
-          first_bike->color = DISPLAY_MAGENTA;
+        first_bike->color = DISPLAY_MAGENTA;
       } else if (location == BOTTOM_LEFT) {
-          first_bike->color = DISPLAY_GREEN;
+        first_bike->color = DISPLAY_GREEN;
       } else {
-          first_bike->color = DISPLAY_YELLOW;
+        first_bike->color = DISPLAY_YELLOW;
       }
       currentState = COLOR_P2;
       PLAYER_ONE_COLOR = false;
@@ -380,13 +380,13 @@ void tronControl_tick() {
       eraseColorScreen();
       tron_getLocationFromPoint(touchscreen_get_location());
       if (location == TOP_LEFT) {
-          second_bike->color = DISPLAY_CYAN;
+        second_bike->color = DISPLAY_CYAN;
       } else if (location == TOP_RIGHT) {
-          second_bike->color = DISPLAY_MAGENTA;
+        second_bike->color = DISPLAY_MAGENTA;
       } else if (location == BOTTOM_LEFT) {
-          second_bike->color = DISPLAY_GREEN;
+        second_bike->color = DISPLAY_GREEN;
       } else {
-          second_bike->color = DISPLAY_YELLOW;
+        second_bike->color = DISPLAY_YELLOW;
       }
       currentState = GRID;
       touchscreen_ack_touch();
@@ -404,7 +404,8 @@ void tronControl_tick() {
     if (bike_has_lost(first_bike)) {
       PLAYER_ONE_LOST = true;
       currentState = END_GAME_COUNTDOWN;
-    } else if (bike_has_lost(second_bike)) {
+    }
+    if (bike_has_lost(second_bike)) {
       PLAYER_ONE_LOST = false;
       currentState = END_GAME_COUNTDOWN;
     }
@@ -412,6 +413,7 @@ void tronControl_tick() {
   case END_GAME_COUNTDOWN:
     if (end_game_cnt == end_num_ticks) {
       currentState = WIN;
+      end_game_cnt = 0;
     }
     break;
   case WIN:
@@ -420,6 +422,7 @@ void tronControl_tick() {
       display_fillScreen(DISPLAY_BLACK);
       printModeScreen();
       currentState = GAME_MODE;
+      win_cnt = 0;
     }
     break;
   }

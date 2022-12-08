@@ -176,15 +176,15 @@ void bike_tick(bike_t *bike, bike_t *enemyBike) {
     // printf("NEXT.X: %d\n", bike->next.x);
     if (abs(bike->current.x - bike->next.x) > 7 ||
         abs(bike->current.y - bike->next.y) > 7) {
-      if ((BUTTON_VALUES == 1) && (bike->type == PLAYER_1)) {
+      if ((BUTTON_VALUES == 4) && (bike->type == PLAYER_1)) {
         bike->next_direction = RIGHT;
-      } else if ((BUTTON_VALUES == 2) && (bike->type == PLAYER_1)) {
+      } else if ((BUTTON_VALUES == 8) && (bike->type == PLAYER_1)) {
         bike->next_direction = LEFT;
       }
 
-      if ((BUTTON_VALUES == 4) && (bike->type == PLAYER_2)) {
+      if ((BUTTON_VALUES == 1) && (bike->type == PLAYER_2)) {
         bike->next_direction = RIGHT;
-      } else if ((BUTTON_VALUES == 8) && (bike->type == PLAYER_2)) {
+      } else if ((BUTTON_VALUES == 2) && (bike->type == PLAYER_2)) {
         bike->next_direction = LEFT;
       }
     }
