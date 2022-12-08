@@ -282,21 +282,19 @@ static void eraseGrid() {
 
 static void printWinScreen() {
   display_setCursor(35, (240 / 2));
-  display_setTextSize(4);
+  display_setTextSize(3);
   if (PLAYER_ONE_LOST) {
     display_setTextColor(second_bike->color);
     if (ONE_PLAYER_GAME) {
-      display_print("PLAYER 2 WINS!!");
-    } else {
       display_print("COMPUTER WINS!! YOU SUCK!!");
+    } else {
+      display_print("PLAYER 2 WINS!!");
     }
   } else {
     display_setTextColor(first_bike->color);
     display_print("PLAYER 1 WINS!!");
   }
 }
-
-
 
 // Initialize the game control logic
 // This function will initialize all missiles, stats, plane, etc.
@@ -418,7 +416,11 @@ void tronControl_tick() {
     break;
   case WIN:
     printWinScreen();
-    if ()
+    if (win_cnt == win_num_ticks) {
+      display_fillScreen(DISPLAY_BLACK);
+      printModeScreen();
+      currentState = GAME_MODE;
+    }
     break;
   }
 
