@@ -84,7 +84,7 @@ void first_player_bike_init(bike_t *bike) {
 
   bike->light_direction = RIGHT;
 
-  bike->color = DISPLAY_CYAN;
+  //bike->color = DISPLAY_CYAN;
   bike->currentState = INIT_ST;
 
   bike->type = PLAYER_1;
@@ -111,7 +111,7 @@ void second_player_bike_init(bike_t *bike) {
 
   bike->light_direction = LEFT;
 
-  bike->color = DISPLAY_MAGENTA;
+  //bike->color = DISPLAY_MAGENTA;
   bike->currentState = INIT_ST;
 
   bike->type = PLAYER_2;
@@ -138,7 +138,7 @@ void computer_bike_init(bike_t *bike) {
 
   bike->light_direction = LEFT;
 
-  bike->color = DISPLAY_MAGENTA;
+  //bike->color = DISPLAY_MAGENTA;
   bike->currentState = INIT_ST;
 
   bike->type = COMPUTER_PLAYER;
