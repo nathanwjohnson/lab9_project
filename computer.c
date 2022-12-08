@@ -76,6 +76,16 @@ void initBoard() {
   }
 }
 
-void fillSquare(uint32_t x, uint32_t y) { tronBoard[y / 10][x / 10] = 1; }
+void fillSquare(uint32_t x, uint32_t y) {
+  if (x <= 0 || x >= 320 || y <= 0 || y >= 240) {
+    return;
+  }
+  tronBoard[y / 10][x / 10] = 1;
+}
 
-void clearSquare(uint32_t x, uint32_t y) { tronBoard[y / 10][x / 10] = 0; }
+void clearSquare(uint32_t x, uint32_t y) {
+  if (x <= 0 || x >= 320 || y <= 0 || y >= 240) {
+    return;
+  }
+  tronBoard[y / 10][x / 10] = 0;
+}
